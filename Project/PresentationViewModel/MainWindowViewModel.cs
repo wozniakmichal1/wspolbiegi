@@ -1,84 +1,43 @@
-﻿//__________________________________________________________________________________________
-//
-//  Copyright 2024 Mariusz Postol LODZ POLAND.
-//
-//  To be in touch join the community by pressing the `Watch` button and to get started
-//  comment using the discussion panel at
-//  https://github.com/mpostol/TP/discussions/182
-//__________________________________________________________________________________________
+﻿using PresentationViewModel.MVVMLight;
+using PresentationModel;
+using System.Windows.Input;
 
-using System;
-using System.Collections.ObjectModel;
-using TP.ConcurrentProgramming.Presentation.Model;
-using TP.ConcurrentProgramming.Presentation.ViewModel.MVVMLight;
-using ModelIBall = TP.ConcurrentProgramming.Presentation.Model.IBall;
-
-namespace TP.ConcurrentProgramming.Presentation.ViewModel
+namespace PresentationViewModel
 {
-  public class MainWindowViewModel : ViewModelBase, IDisposable
-  {
-    #region ctor
-
-    public MainWindowViewModel() : this(null)
-    { }
-
-    internal MainWindowViewModel(ModelAbstractApi modelLayerAPI)
+    public class MainWindowViewModel : ViewModelBase
     {
-      ModelLayer = modelLayerAPI == null ? ModelAbstractApi.CreateModel() : modelLayerAPI;
-      Observer = ModelLayer.Subscribe<ModelIBall>(x => Balls.Add(x));
-    }
-
-    #endregion ctor
-
-    #region public API
-
-    public void Start(int numberOfBalls)
-    {
-      if (Disposed)
-        throw new ObjectDisposedException(nameof(MainWindowViewModel));
-      ModelLayer.Start(numberOfBalls);
-      Observer.Dispose();
-    }
-
-    public ObservableCollection<ModelIBall> Balls { get; } = new ObservableCollection<ModelIBall>();
-
-    #endregion public API
-
-    #region IDisposable
-
-    protected virtual void Dispose(bool disposing)
-    {
-      if (!Disposed)
-      {
-        if (disposing)
+        private PresentationModelAbstractAPI _api;
+        private ViewModelBase? _currentViewModel;
+        private string _ballNumberInput = "5";
+        public string BallNumberInput
         {
-          Balls.Clear();
-          Observer.Dispose();
-          ModelLayer.Dispose();
+            get { return _ballNumberInput; } set { _ballNumberInput = value; RaisePropertyChanged(); }
+        }
+        public ICommand StartCommand { get; }
+
+        public ViewModelBase CurrentViewModel
+        {
+            get { return _currentViewModel; }
+            set { _currentViewModel = value;
+                RaisePropertyChanged();
+            }
         }
 
-        // TODO: free unmanaged resources (unmanaged objects) and override finalizer
-        // TODO: set large fields to null
-        Disposed = true;
-      }
+        public MainWindowViewModel() : this(null) { }
+        public MainWindowViewModel(PresentationModelAbstractAPI api)
+        {
+            _api = api ?? PresentationModelAbstractAPI.CreateAPI();
+            CurrentViewModel = this;
+            StartCommand = new RelayCommand(StartSimulation);
+        }
+        private void StartSimulation()
+        {
+            int count = int.Parse(BallNumberInput);
+
+            var BoardScene = new BoardViewModel(_api, count, 400, 350);
+
+            CurrentViewModel = BoardScene;
+        }
+
     }
-
-    public void Dispose()
-    {
-      if (Disposed)
-        throw new ObjectDisposedException(nameof(MainWindowViewModel));
-      Dispose(disposing: true);
-      GC.SuppressFinalize(this);
-    }
-
-    #endregion IDisposable
-
-    #region private
-
-    private IDisposable Observer = null;
-    private ModelAbstractApi ModelLayer;
-    private bool Disposed = false;
-
-    #endregion private
-  }
 }
