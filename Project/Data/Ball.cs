@@ -1,50 +1,45 @@
-﻿//____________________________________________________________________________________________________________________________________
-//
-//  Copyright (C) 2024, Mariusz Postol LODZ POLAND.
-//
-//  To be in touch join the community by pressing the `Watch` button and get started commenting using the discussion panel at
-//
-//  https://github.com/mpostol/TP/discussions/182
-//
-//_____________________________________________________________________________________________________________________________________
+﻿using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
-namespace TP.ConcurrentProgramming.Data
+namespace Data
 {
-  internal class Ball : IBall
-  {
-    #region ctor
-
-    internal Ball(Vector initialPosition, Vector initialVelocity)
+    public class Ball : IBall
     {
-      Position = initialPosition;
-      Velocity = initialVelocity;
+        private IVector _position;
+        private double _diameter;
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        public double Diameter => _diameter;
+
+        public IVector Position => _position;
+
+        public Ball(double x, double y, double diameter)
+        {
+            _position = new Vector(x, y);
+            _diameter = diameter;
+        }
+        protected virtual void OnPropertyChanged([CallerMemberName] string propery = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propery));
+        }
+
+        public void Move(double x, double y)
+        {
+            _position = new Vector(x, y, this.Position.VelocityX, this.Position.VelocityY);
+            OnPropertyChanged(nameof(Position));
+        }
+
+        public void InverseSpeed(string value)
+        {
+            if (value == "x")
+            {
+                _position = new Vector(this.Position.X, this.Position.Y, -1 * this.Position.VelocityX, this.Position.VelocityY);
+            }
+            else if (value == "y")
+            {
+                _position = new Vector(this.Position.X, this.Position.Y, this.Position.VelocityX, -1 * this.Position.VelocityY);
+            }
+            OnPropertyChanged(nameof(Position));
+        }
     }
-
-    #endregion ctor
-
-    #region IBall
-
-    public event EventHandler<IVector>? NewPositionNotification;
-
-    public IVector Velocity { get; set; }
-
-    #endregion IBall
-
-    #region private
-
-    private Vector Position;
-
-    private void RaiseNewPositionChangeNotification()
-    {
-      NewPositionNotification?.Invoke(this, Position);
-    }
-
-    internal void Move(Vector delta)
-    {
-      Position = new Vector(Position.x + delta.x, Position.y + delta.y);
-      RaiseNewPositionChangeNotification();
-    }
-
-    #endregion private
-  }
 }
