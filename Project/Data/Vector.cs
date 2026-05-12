@@ -2,29 +2,23 @@
 {
     internal class Vector : IVector
     {
-        private double _x;
-        private double _y;
-        private double _velocityX;
-        private double _velocityY;
-           
-        public Vector(double x, double y) { 
-            Random random = new Random();
-            _x = x;
-            _y = y;
-            _velocityX = random.NextDouble() * random.Next(1,5);
-            _velocityY = random.NextDouble() * random.Next(1,5);
-        }
-        internal Vector(double x, double y, double VelocityX, double VelocityY)
-        {
-            _x = x;
-            _y = y;
-            _velocityX = VelocityX;
-            _velocityY = VelocityY;
-        }
-        public double X => _x;
-        public double Y => _y;
+        public double X { get; }
+        public double Y { get; }
+        public double VelocityX { get; }
+        public double VelocityY { get; }
 
-        public double VelocityX => _velocityX;
-        public double VelocityY => _velocityY;
+        internal Vector(double x, double y)
+        {
+            var rng = new Random();
+            X = x;
+            Y = y;
+            VelocityX = (rng.NextDouble() * 3 + 1) * (rng.Next(2) == 0 ? 1 : -1);
+            VelocityY = (rng.NextDouble() * 3 + 1) * (rng.Next(2) == 0 ? 1 : -1);
+        }
+
+        internal Vector(double x, double y, double vx, double vy)
+        {
+            X = x; Y = y; VelocityX = vx; VelocityY = vy;
+        }
     }
 }

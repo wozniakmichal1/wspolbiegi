@@ -4,10 +4,12 @@ namespace Data
 {
     public interface IBall : INotifyPropertyChanged
     {
-        IVector Position { get;}
+        IVector Position { get; }
         double Diameter { get; }
+        double Mass { get; }
 
-        void Move(double x, double y);
-        public void InverseSpeed(string value);
+        void SetVelocity(double vx, double vy);
+
+        Task StartMovingAsync(IProgress<IBall> progress, CancellationToken token);
     }
 }

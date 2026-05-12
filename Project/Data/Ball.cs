@@ -3,43 +3,62 @@ using System.Runtime.CompilerServices;
 
 namespace Data
 {
-    public class Ball : IBall
+    internal class Ball : IBall
     {
+        private readonly object _lock = new();
         private IVector _position;
-        private double _diameter;
+
+        public double Diameter { get; }
+        public double Mass { get; }
 
         public event PropertyChangedEventHandler? PropertyChanged;
-        public double Diameter => _diameter;
 
-        public IVector Position => _position;
+        public IVector Position
+        {
+            get { lock (_lock) { return _position; } }
+        }
 
-        public Ball(double x, double y, double diameter)
+        public Ball(double x, double y, double diameter, double mass)
         {
             _position = new Vector(x, y);
-            _diameter = diameter;
-        }
-        protected virtual void OnPropertyChanged([CallerMemberName] string propery = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propery));
+            Diameter = diameter;
+            Mass = mass;
         }
 
-        public void Move(double x, double y)
+        public void SetVelocity(double vx, double vy)
         {
-            _position = new Vector(x, y, this.Position.VelocityX, this.Position.VelocityY);
+            lock (_lock)
+            {
+                _position = new Vector(_position.X, _position.Y, vx, vy);
+            }
+        }
+
+        public async Task StartMovingAsync(IProgress<IBall> progress, CancellationToken token)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                MoveStep();
+                progress.Report(this);
+                await Task.Delay(16, token);
+            }
+        }
+
+        private void MoveStep()
+        {
+            lock (_lock)
+            {
+                _position = new Vector(
+                    _position.X + _position.VelocityX,
+                    _position.Y + _position.VelocityY,
+                    _position.VelocityX,
+                    _position.VelocityY);
+            }
             OnPropertyChanged(nameof(Position));
         }
 
-        public void InverseSpeed(string value)
+        protected virtual void OnPropertyChanged([CallerMemberName] string? property = null)
         {
-            if (value == "x")
-            {
-                _position = new Vector(this.Position.X, this.Position.Y, -1 * this.Position.VelocityX, this.Position.VelocityY);
-            }
-            else if (value == "y")
-            {
-                _position = new Vector(this.Position.X, this.Position.Y, this.Position.VelocityX, -1 * this.Position.VelocityY);
-            }
-            OnPropertyChanged(nameof(Position));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
         }
     }
 }
