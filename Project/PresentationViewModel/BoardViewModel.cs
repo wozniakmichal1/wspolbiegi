@@ -2,51 +2,49 @@
 using PresentationModel;
 using PresentationViewModel.MVVMLight;
 using System.Collections.ObjectModel;
-using System.Threading.Tasks;
-
 
 namespace PresentationViewModel
 {
     public class BoardViewModel : ViewModelBase
     {
-
         public double BoardWidth { get; }
         public double BoardHeight { get; }
-        private ObservableCollection<IBall>? _balls;
-        
+
+        private ObservableCollection<IBall> _balls = new();
         public ObservableCollection<IBall> Balls
         {
             get => _balls;
-                set
-            {
-                _balls = value;
-                RaisePropertyChanged();
-            }
+            set { _balls = value; RaisePropertyChanged(); }
         }
 
-        public BoardViewModel(PresentationModelAbstractAPI api, int BallCount, double width, double height)
+        private readonly PresentationModelAbstractAPI _api;
+
+       
+        private readonly SynchronizationContext _uiContext;
+
+        public BoardViewModel(PresentationModelAbstractAPI api, int ballCount,
+                              double width, double height)
         {
-            this.BoardHeight = height;
-            this.BoardWidth = width;
-            Balls = new ObservableCollection<IBall>();
-            api.StartSimulation(BallCount, BoardWidth, BoardHeight);
+            _api = api;
+            BoardWidth = width;
+            BoardHeight = height;
 
-            IEnumerable<IBall> RawBalls = api.GetBalls();
+            _uiContext = SynchronizationContext.Current
+                         ?? new SynchronizationContext();
 
-            foreach (IBall ball in RawBalls)
-            {
+            api.StartSimulation(ballCount, BoardWidth, BoardHeight);
+
+            foreach (var ball in api.GetBalls())
                 Balls.Add(ball);
-            }
-            _ = RunSimulationAsync(api);
-        }
-        private async Task RunSimulationAsync(PresentationModelAbstractAPI api)
-        {
-            while (true)
-            {
-                api.MoveBalls();
-                await Task.Delay(30);
-            }
+
+            api.BallMoved += OnBallMoved;
         }
 
+        private void OnBallMoved(IBall ball)
+        {
+            _uiContext.Post(_ => {}, null);
+        }
+
+        public void Stop() => _api.Stop();
     }
 }
