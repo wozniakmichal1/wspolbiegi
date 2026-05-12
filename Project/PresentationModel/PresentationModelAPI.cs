@@ -5,24 +5,21 @@ namespace PresentationModel
 {
     public class PresentationModelAPI : PresentationModelAbstractAPI
     {
-        private LogicAbstractAPI _logicAPI;
+        private readonly LogicAbstractAPI _logic;
 
-        public PresentationModelAPI(LogicAbstractAPI logicAPI)
+        public override event Action<IBall>? BallMoved;
+
+        public PresentationModelAPI(LogicAbstractAPI logic)
         {
-            _logicAPI = logicAPI;
+            _logic = logic;
+            _logic.BallMoved += ball => BallMoved?.Invoke(ball);
         }
 
-        public override IEnumerable<IBall> GetBalls() => _logicAPI.GetBalls();
+        public override IEnumerable<IBall> GetBalls() => _logic.GetBalls();
 
-        public override void MoveBalls()
-        {
-            _logicAPI.Step();
-        }
+        public override void StartSimulation(int ballCount, double boardWidth, double boardHeight)
+            => _logic.StartSimulation(ballCount, boardWidth, boardHeight);
 
-        public override void StartSimulation(int BallCount, double BoardWidth, double BoardHight)
-        {
-            _logicAPI.StartSimulation(BallCount, BoardWidth, BoardHight);
-        }
-
+        public override void Stop() => _logic.Stop();
     }
 }

@@ -1,64 +1,130 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using PresentationModel;
+﻿using PresentationModel;
 using BusinessLogic;
 using Data;
-using System.Linq;
-
+using System.ComponentModel;
 namespace PresentationModelTest
 {
-    [TestClass]
-    public class PresentationModelTests
+
+    public class FakeBall : IBall
     {
-      
-        private class TestLogic : LogicAbstractAPI
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        public IVector Position { get; set; } = null!;
+        public double Diameter { get; set; }
+        public double Mass { get; set; }
+
+        public void SetVelocity(double vx, double vy)
         {
-            public bool StepCalled { get; private set; }
-            public bool StartCalled { get; private set; }
+            // Fake implementation does nothing
+        }
 
-            private double _boardWidth;
-            private double _boardHeight;
+        public Task StartMovingAsync(IProgress<IBall> progress, CancellationToken token)
+        {
+            // Fake implementation returns completed task
+            return Task.CompletedTask;
+        }
+    }
 
-            public override double BoardWidth => _boardWidth;
-            public override double BoardHeight => _boardHeight;
+    public class FakeLogicAPI : LogicAbstractAPI
+    {
+        public bool StartSimulationCalled { get; private set; }
+        public int BallCount { get; private set; }
+        private double _boardWidth;
+        private double _boardHeight;
+        public bool StopCalled { get; private set; }
 
+        public List<IBall> BallsToReturn { get; set; } = new List<IBall>();
 
-            public override void StartSimulation(int count, double width, double height) => StartCalled = true;
-            public override void Step() => StepCalled = true;
-            public override IEnumerable<IBall> GetBalls() => new System.Collections.Generic.List<IBall>();
+        public override double BoardWidth => _boardWidth;
+
+        public override double BoardHeight => _boardHeight;
+
+        public override event Action<IBall>? BallMoved;
+
+        public void RaiseBallMoved(IBall ball) => BallMoved?.Invoke(ball);
+
+        public override void StartSimulation(int ballCount, double boardWidth, double boardHeight)
+        {
+            StartSimulationCalled = true;
+            BallCount = ballCount;
+            _boardWidth = boardWidth;
+            _boardHeight = boardHeight;
+        }
+
+        public override void Stop() => StopCalled = true;
+        public override IEnumerable<IBall> GetBalls() => BallsToReturn;
+    }
+
+    // --- TESTY ---
+
+    [TestClass]
+    public class PresentationModelAPITests
+    {
+        private FakeLogicAPI _fakeLogicApi;
+        private PresentationModelAPI _presentationModelApi;
+
+        [TestInitialize]
+        public void Setup()
+        {
+            _fakeLogicApi = new FakeLogicAPI();
+            _presentationModelApi = new PresentationModelAPI(_fakeLogicApi);
         }
 
         [TestMethod]
-        public void StartSimulation_CallsLogicStart()
+        public void StartSimulation_ShouldCallLogicAPI_StartSimulation()
         {
-            var testLogic = new TestLogic();
-            var model = new PresentationModelAPI(testLogic);
+            // Act
+            _presentationModelApi.StartSimulation(5, 400, 300);
 
-            model.StartSimulation(5, 100, 100);
-
-            Assert.IsTrue(testLogic.StartCalled);
+            // Assert
+            Assert.IsTrue(_fakeLogicApi.StartSimulationCalled);
+            Assert.AreEqual(5, _fakeLogicApi.BallCount);
+            Assert.AreEqual(400, _fakeLogicApi.BoardWidth);
+            Assert.AreEqual(300, _fakeLogicApi.BoardHeight);
         }
 
         [TestMethod]
-        public void MoveBalls_CallsLogicStep()
+        public void Stop_ShouldCallLogicAPI_Stop()
         {
-            var testLogic = new TestLogic();
-            var model = new PresentationModelAPI(testLogic);
+            // Act
+            _presentationModelApi.Stop();
 
-            model.MoveBalls();
-
-            Assert.IsTrue(testLogic.StepCalled);
+            // Assert
+            Assert.IsTrue(_fakeLogicApi.StopCalled);
         }
 
         [TestMethod]
-        public void GetBalls_ReturnsBallsFromLogic()
+        public void GetBalls_ShouldReturnBallsFromLogicAPI()
         {
-            var testLogic = new TestLogic();
-            var model = new PresentationModelAPI(testLogic);
+            // Arrange
+            var expectedBalls = new List<IBall> { new FakeBall() };
+            _fakeLogicApi.BallsToReturn = expectedBalls;
 
-            var balls = model.GetBalls();
+            // Act
+            var result = _presentationModelApi.GetBalls();
 
-            Assert.IsNotNull(balls);
-            Assert.AreEqual(0, balls.Count());
+            // Assert
+            Assert.AreEqual(expectedBalls, result);
+        }
+
+        [TestMethod]
+        public void BallMoved_EventShouldBeInvoked_WhenLogicAPIRaisesEvent()
+        {
+            // Arrange
+            var fakeBall = new FakeBall();
+            bool eventRaised = false;
+
+            _presentationModelApi.BallMoved += (ball) =>
+            {
+                eventRaised = true;
+                Assert.AreEqual(fakeBall, ball);
+            };
+
+            // Act
+            _fakeLogicApi.RaiseBallMoved(fakeBall);
+
+            // Assert
+            Assert.IsTrue(eventRaised, "Zdarzenie BallMoved nie zostało wywołane.");
         }
     }
 }

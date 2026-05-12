@@ -10,10 +10,11 @@ namespace PresentationModel
             return new PresentationModelAPI(api ?? LogicAbstractAPI.CreateAPI());
         }
 
-        public abstract void StartSimulation(int BallCount, double BoardWidth, double BoardHight);
-
+        public abstract void StartSimulation(int ballCount, double boardWidth, double boardHeight);
+        public abstract void Stop();
         public abstract IEnumerable<IBall> GetBalls();
 
-        public abstract void MoveBalls();
+        
+        public abstract event Action<IBall>? BallMoved;
     }
 }
