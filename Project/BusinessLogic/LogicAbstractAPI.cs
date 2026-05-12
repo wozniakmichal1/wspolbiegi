@@ -1,10 +1,10 @@
 ﻿using Data;
+
 namespace BusinessLogic
 {
     public abstract class LogicAbstractAPI
     {
-
-        public static LogicAbstractAPI CreateAPI(DataAbstractAPI api = null)
+        public static LogicAbstractAPI CreateAPI(DataAbstractAPI? api = null)
         {
             return new LogicAPI(api ?? DataAbstractAPI.CreateAPI());
         }
@@ -13,9 +13,9 @@ namespace BusinessLogic
         public abstract double BoardHeight { get; }
 
         public abstract IEnumerable<IBall> GetBalls();
-        public abstract void StartSimulation(int BallCount, double BoardWidth, double BoardHeight);
+        public abstract void StartSimulation(int ballCount, double boardWidth, double boardHeight);
+        public abstract void Stop();
 
-        public abstract void Step();
-
+        public abstract event Action<IBall>? BallMoved;
     }
 }
