@@ -12,8 +12,8 @@
             var rng = new Random();
             X = x;
             Y = y;
-            VelocityX = (rng.NextDouble() * 3 + 1) * (rng.Next(2) == 0 ? 1 : -1);
-            VelocityY = (rng.NextDouble() * 3 + 1) * (rng.Next(2) == 0 ? 1 : -1);
+            VelocityX = (rng.NextDouble() * 3 + 1) * (rng.Next(2) == 0 ? 20 : -20);
+            VelocityY = (rng.NextDouble() * 3 + 1) * (rng.Next(2) == 0 ? 20 : -20);
         }
 
         internal Vector(double x, double y, double vx, double vy)

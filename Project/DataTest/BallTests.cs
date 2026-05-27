@@ -17,8 +17,8 @@ namespace DataTests
         public void Vector_RandomConstructor_VelocityNonZero()
         {
             var v = CreateVector(0, 0);
-            Assert.IsTrue(Math.Abs(v.VelocityX) >= 1 && Math.Abs(v.VelocityX) <= 5);
-            Assert.IsTrue(Math.Abs(v.VelocityY) >= 1 && Math.Abs(v.VelocityY) <= 5);
+            Assert.IsTrue(Math.Abs(v.VelocityX) >= 20 && Math.Abs(v.VelocityX) <= 80);
+            Assert.IsTrue(Math.Abs(v.VelocityY) >= 20 && Math.Abs(v.VelocityY) <= 80);
         }
 
         [TestMethod]
