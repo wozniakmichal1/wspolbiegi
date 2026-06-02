@@ -38,9 +38,10 @@ namespace Data
 
         public async Task StartMovingAsync(IProgress<IBall> progress, CancellationToken token)
         {
+            using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(10));
             Stopwatch sw = new Stopwatch();
             sw.Start();
-            while (!token.IsCancellationRequested)
+            while (await timer.WaitForNextTickAsync(token))
             {
                 double DeltaTime = sw.Elapsed.TotalSeconds;
                 sw.Restart();
@@ -50,14 +51,6 @@ namespace Data
                 String VelString = _position.VelocityX.ToString() + "," + _position.VelocityY.ToString() + ",";
                 String BallInfoString = Diameter.ToString() + "," + Mass.ToString();
                 _logger.Add(PosString + VelString + BallInfoString);
-                try
-                {
-                    await Task.Delay(10, token);
-                }
-                catch (TaskCanceledException)
-                { 
-                    break;
-                }
             }
         }
 
